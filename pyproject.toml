@@ -1,0 +1,28 @@
+[build-system]
+requires = [
+  "setuptools>=42",
+  "wheel",
+  "setuptools-scm[toml]>=6.2",
+  "setuptools-git-versioning",
+  "cython",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+
+[project]
+authors = [
+  { name = "Sami Kama", email = "github_projects@samikama.com" },
+]
+name = "CPCargo"
+dynamic = ["version"]
+description = "Creates a subprocess to automatically upload model checkpoints to s3"
+requires-python = ">=3.10"
+dependencies = [
+  "wheel",
+  "boto3",
+  "s3transfer",
+  "watchdog"
+]
+[project.scripts]
+cp_cargo = "CPCargo:cpcargo_main.main"
