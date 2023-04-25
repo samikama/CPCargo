@@ -22,7 +22,8 @@ dependencies = [
   "wheel",
   "boto3",
   "s3transfer",
-  "watchdog"
+  "watchdog",
+  "regex"
 ]
 [project.scripts]
 cp_cargo = "CPCargo:cpcargo_main.main"

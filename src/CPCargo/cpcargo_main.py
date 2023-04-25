@@ -1,7 +1,7 @@
 # main function for mostly testing
-from argparse import ArgumentParser as AP, FileType as APFileType
-import signal, functools, logging, sys, time
-from CPCargo.cpcargo import CheckpointCargo
+from argparse import ArgumentParser as AP
+import sys, time
+from CPCargo import CheckpointCargo
 
 
 def parse_arguments():
@@ -20,6 +20,7 @@ def main():
   args, unknown = parse_arguments()
   cargo = CheckpointCargo(src_dir=args.source_dir,
                           dst_url=args.destination_url,
+                          region=args.region,
                           file_regex=args.file_pattern,
                           recursive=args.recursive)
   cargo.start()

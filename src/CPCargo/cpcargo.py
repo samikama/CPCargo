@@ -4,9 +4,7 @@ from watchdog.observers.api import ObservedWatch
 from CPCargo.handler import CheckpointHandler
 from multiprocessing import Queue, Process
 import queue, logging, time, os
-from concurrent.futures import ThreadPoolExecutor
-import boto3
-import s3transfer
+from CPCargo.uploaders import S3Uploader
 
 logging.basicConfig(
     format=
@@ -20,22 +18,24 @@ class Watcher():
   _observer: Observer
   _watch: ObservedWatch
 
-  def __init__(
-      self,
-      src_dir: str,
-      dst_url: str,
-      #terminate_queue:Queue,
-      file_regex: str = ".*",
-      recursive: bool = False) -> None:
+  def __init__(self,
+               src_dir: str,
+               dst_url: str,
+               region: str = "us-east-1",
+               file_regex: str = ".*",
+               recursive: bool = False) -> None:
     self._dst = dst_url
     self._src_path = src_dir
     self._file_re = file_regex
     self._recursive = recursive
-    #self._queue=terminate_queue
+    self._region = region
     self._observer = None
-    self._handler = CheckpointHandler(src_path=self._src_path,
-                                      dst_url=self._dst,
-                                      file_re=self._file_re,
+    self._uploader = S3Uploader(region=region,
+                                src_prefix=src_dir,
+                                dst_url=dst_url,
+                                pool_size=0)
+    self._handler = CheckpointHandler(uploader=self._uploader,
+                                      file_regex=self._file_re,
                                       recursive=self._recursive)
     self._watch = None
 
@@ -60,11 +60,13 @@ class Watcher():
 def watcher(src: str,
             dst: str,
             file_re: str,
+            region: str,
             terminate_queue: Queue,
             recursive: bool,
             timeout: int = 100):
   agent = Watcher(src_dir=src,
                   dst_url=dst,
+                  region=region,
                   file_regex=file_re,
                   recursive=recursive)
   logger.info("Starting watcher")
@@ -90,13 +92,14 @@ class CheckpointCargo():
   def __init__(self,
                src_dir: str,
                dst_url: str,
+               region: str,
                file_regex: str = ".*",
                recursive: bool = False) -> None:
     self._queue = Queue()
     self._src = os.path.abspath(src_dir)
     self._process = Process(
         target=watcher,
-        args=[self._src, dst_url, file_regex, self._queue, recursive])
+        args=[self._src, dst_url, file_regex, region, self._queue, recursive])
 
   def start(self):
     logger.info("Starting Cargo on {path}".format(path=self._src))
