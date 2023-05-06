@@ -6,12 +6,20 @@ from multiprocessing import Queue, Process
 import queue, logging, time, os
 from CPCargo.uploaders import S3Uploader
 
-logging.basicConfig(
-    format=
-    '%(asctime)s.%(msecs)03d %(name)s %(filename)s:%(funcName)s:%(lineno)d %(message)s',
-    datefmt='%Y-%m-%d,%H:%M:%S',
-    level=logging.INFO)
-logger = logging.getLogger("CPCargo")
+
+def get_logger():
+  logger = logging.getLogger("CPCargo")
+  ch = logging.StreamHandler()
+  formatter = logging.Formatter(
+      fmt=
+      '%(asctime)s.%(msecs)03d %(name)s %(filename)s:%(funcName)s:%(lineno)d %(message)s',
+      datefmt='%Y-%m-%d,%H:%M:%S')
+  ch.setFormatter(formatter)
+  logger.addHandler(ch)
+  return logger
+
+
+logger = get_logger()
 
 
 class Watcher():

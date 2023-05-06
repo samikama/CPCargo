@@ -1,7 +1,7 @@
 import os, logging, signal, time
 import random
 from argparse import ArgumentParser as AP
-from CPCargo import CheckpointCargo
+from CPCargo import CheckpointCargo, Heartbeat
 
 SignalCheckpoint = False
 logging.basicConfig(
@@ -64,6 +64,9 @@ class DataPipeline():
   def next(self):
     if self._n < self._nmax:
       self._n += 1
+      if random.random() < 0.01:
+        logger.info("Simulating stuck process")
+        return 20
       return random.randint(2, 6)
     raise StopIteration()
 
@@ -99,15 +102,24 @@ class Executor():
                          region=c["region"],
                          file_regex=r'.*',
                          recursive=True)
+    hb = Heartbeat(timeout=8)
     # You can start monitoring checkpoint directory after data pipeline subprocesses forks
     CP.start()
     for id, batch in enumerate(self.data_pipeline):
+      #Heartbeat pulse, starts or resets timer with the default timeout
+      hb.pulse()
       self.model.step(batch)
       if SignalCheckpoint:
+        #  You can start a timer with custom timeout. It resets existing timer
+        hb.start(15)
         checkpoint(id, c["checkpoint_path"])
+        # Stops the existing timer
+        hb.stop()
         break
       if id % c["cp_period"] == 0:
+        hb.start(13)
         checkpoint(id, c["checkpoint_path"])
+        hb.stop()
     CP.stop()
 
 
