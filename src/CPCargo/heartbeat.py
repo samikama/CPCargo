@@ -1,5 +1,6 @@
 from multiprocessing import Queue, Process
 import logging, time, os, signal, typing
+from queue import Empty
 
 
 def get_logger():
@@ -15,10 +16,22 @@ def get_logger():
 
 
 logger = get_logger()
+check_time = None
+pulse = None
+
+
+def signal_handler(signum, frame):
+  global check_time
+  global pulse
+  logger.warn("Received {sig}, check_time={ct} pulse={p} frame={fr}".format(
+      sig=signal.Signals(signum).name, ct=check_time, p=pulse, fr=frame))
 
 
 def hang_watcher(parent_pid: int, default_timeout: int, queue: Queue,
                  kill_timeout: int):
+  signal.signal(signal.SIGUSR1, signal_handler)
+  global check_time
+  global pulse
   check_time = None
   pulse = False
   logger.info("Starting parent watcher for pid={pid} mypid={mpid}".format(
@@ -59,8 +72,10 @@ def hang_watcher(parent_pid: int, default_timeout: int, queue: Queue,
           pulse = True
           check_time = curr + default_timeout
         first_pass = False
-    except:
+    except Empty:
       pass
+    except Exception as e:
+      logger.error("Unexpected error happened. {err}".format(err=e))
     # wait for 1 sec
     time.sleep(1)
 
@@ -84,13 +99,13 @@ class Heartbeat():
     self._process = Process(
         target=hang_watcher,
         args=[ppid, self._timeout, self._queue, self._kill_timeout])
-    logger.info(
-        "Starting heartbeat checking process with default timeout {timeout}".
-        format(timeout=timeout))
     self._process.start()
+    logger.warn(
+        "Started heartbeat checking process with default timeout {timeout}, process pid={pp}"
+        .format(timeout=timeout, pp=self._process.pid))
 
   def __del__(self):
-    logger.info("Terminating subprocess")
+    logger.warn("Terminating subprocess")
     self._queue.put_nowait(("TERMINATE", None))
     self._process.join()
 

@@ -15,7 +15,7 @@ Once the event loop ends, call `cpc.stop()` to finalize the process.
 See `test/example.py` for an example of how it can be used, including signal handling for checkpoint on termination.
 ## Installation
 Install from github with
-`pip install https://github.com/samikama/CPCargo.git`
+`pip install git+https://github.com/samikama/CPCargo.git`
 
 ## Example use of `test/example.py`
 below script will run(i.e. sleep a random duration) for 100 batches, creating a checkpoint(i.e. dummy files and directories) every 25 steps in `${HOME}/test/checkpoint_dir` directory and upload them to `s3://my_test_bucket/checkpoints/`. It also registers a signal handler such that if sigterm is sent, it will abort event loop and create a new checkpoint regardless of whether it is time or not, saving the most recent state. You can test this functionality by sending `kill -15 <pid>` from another shell. The process prints its self pid when it starts.
