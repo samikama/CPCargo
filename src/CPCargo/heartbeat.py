@@ -42,9 +42,14 @@ def hang_watcher(parent_pid: int, default_timeout: int, queue: Queue,
       logger.warn(
           "Timeout reached. Expected ping at {target} but it is {now}".format(
               target=check_time, now={curr}))
-      os.kill(parent_pid, signal.SIGTERM)
-      time.sleep(kill_timeout)
-      os.kill(parent_pid, signal.SIGKILL)
+      try:
+        os.kill(parent_pid, signal.SIGTERM)
+        time.sleep(kill_timeout)
+        os.kill(parent_pid, signal.SIGKILL)
+      except Exception as e:
+        logger.error(
+            "Failed to terminate watched process pid={pid}. Error was {e}".
+            format(pid=parent_pid, e=e))
       return
     # we need to drain the queue if steps are faster than sleep time
     try:
