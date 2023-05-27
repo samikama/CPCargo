@@ -17,7 +17,7 @@ authors = [
 name = "CPCargo"
 dynamic = ["version"]
 description = "Creates a subprocess to automatically upload model checkpoints to s3"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
   "wheel",
   "boto3",
