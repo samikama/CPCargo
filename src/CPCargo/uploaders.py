@@ -63,4 +63,6 @@ class S3Uploader(Uploader):
     try:
       self._trfmgr.upload_file(filename=file, bucket=self._bucket, key=dest_key)
     except Exception as e:
-      logger.error("Caught exception when trying to upload")
+      logger.error(
+          "Caught exception when trying to upload {f} to bucket={b} key={k} exception={x}"
+          .format(f=file, b=self._bucket, k=dest_key, x=e))
