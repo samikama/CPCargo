@@ -19,6 +19,7 @@ class CheckpointHandler(FileSystemEventHandler):
     if not self._re.search(event.src_path):
       logger.debug(
           "Igoring file={file}, regex miss!".format(file=event.src_path))
+      return
     return super().on_any_event(event)
 
   def on_closed(self, event: FileClosedEvent):

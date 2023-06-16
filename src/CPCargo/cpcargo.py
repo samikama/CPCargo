@@ -7,7 +7,7 @@ import queue, logging, time, os
 from CPCargo.uploaders import S3Uploader
 
 
-def get_logger():
+def get_logger(level=int(os.environ.get("CPCARGO_LOG_LEVEL","0"))):
   logger = logging.getLogger("CPCargo")
   ch = logging.StreamHandler()
   formatter = logging.Formatter(
@@ -16,6 +16,7 @@ def get_logger():
       datefmt='%Y-%m-%d,%H:%M:%S')
   ch.setFormatter(formatter)
   logger.addHandler(ch)
+  logger.setLevel(level)
   return logger
 
 
@@ -29,7 +30,7 @@ class Watcher():
   def __init__(self,
                src_dir: str,
                dst_url: str,
-               region: str = "us-east-1",
+               region: str = "us-west-2",
                file_regex: str = ".*",
                recursive: bool = False) -> None:
     self._dst = dst_url

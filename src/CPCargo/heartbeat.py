@@ -3,7 +3,7 @@ import logging, time, os, signal, typing
 from queue import Empty
 
 
-def get_logger():
+def get_logger(level=int(os.environ.get("HEARTBEAT_LOG_LEVEL","0"))):
   logger = logging.getLogger("Heartbeat")
   ch = logging.StreamHandler()
   formatter = logging.Formatter(
@@ -12,6 +12,7 @@ def get_logger():
       datefmt='%Y-%m-%d,%H:%M:%S')
   ch.setFormatter(formatter)
   logger.addHandler(ch)
+  logger.setLevel(level)
   return logger
 
 
