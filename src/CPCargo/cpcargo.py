@@ -4,10 +4,10 @@ from watchdog.observers.api import ObservedWatch
 from CPCargo.handler import CheckpointHandler
 from multiprocessing import Queue, Process
 import queue, logging, time, os
-from CPCargo.uploaders import S3Uploader
+from CPCargo.uploaders import S3Uploader, CompletionWaiter
 
 
-def get_logger(level=int(os.environ.get("CPCARGO_LOG_LEVEL","0"))):
+def get_logger(level=int(os.environ.get("CPCARGO_LOG_LEVEL", "0"))):
   logger = logging.getLogger("CPCargo")
   ch = logging.StreamHandler()
   formatter = logging.Formatter(
@@ -39,6 +39,7 @@ class Watcher():
     self._recursive = recursive
     self._region = region
     self._observer = None
+    self._waiter = CompletionWaiter()
     self._uploader = S3Uploader(region=region,
                                 src_prefix=src_dir,
                                 dst_url=dst_url,
@@ -64,6 +65,7 @@ class Watcher():
       if self._observer.is_alive():
         self._observer.stop()
       self._observer = None
+    self._waiter.wait(timeout=timeout)
 
 
 def watcher(src: str,
@@ -86,10 +88,12 @@ def watcher(src: str,
       try:
         end = terminate_queue.get_nowait()
         if end:
+          logger.debug("Got end from queue")
           break
       except queue.Empty as e:
         pass
   except KeyboardInterrupt:
+    logger.debug("Got Keyboard Interrupt")
     pass
   finally:
     logger.info("Stopping watcher")
@@ -117,7 +121,8 @@ class CheckpointCargo():
     self._process.start()
 
   def stop(self, timeout=100):
-    logger.info("Stopping Cargo")
+    logger.info(
+        "Stopping Cargo process.isalive={p}".format(p=self._process.is_alive()))
     self._queue.put_nowait(True)
     self._process.join(timeout)
     logger.info(
