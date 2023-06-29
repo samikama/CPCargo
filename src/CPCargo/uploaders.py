@@ -40,7 +40,7 @@ class CompletionWaiter:
   def __init__(self, timeout=30) -> None:
     self._timeout = timeout
     self.active_files = set()
-    self._lock = threading.lock()
+    self._lock = threading.Lock()
 
   def get_callback(self, filename):
     with self._lock:
