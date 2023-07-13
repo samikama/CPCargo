@@ -43,7 +43,8 @@ class Watcher():
     self._uploader = S3Uploader(region=region,
                                 src_prefix=src_dir,
                                 dst_url=dst_url,
-                                pool_size=0)
+                                waiter=self._waiter,
+                                pool_size=0)    
     self._handler = CheckpointHandler(uploader=self._uploader,
                                       file_regex=self._file_re,
                                       recursive=self._recursive)
